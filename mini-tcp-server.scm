@@ -11,7 +11,7 @@
 (define accept-handler (lambda()
 			 (begin
 			   (define-values (in out) (tcp-accept listener))
-			   (display "Accepted new connection")
+			   (display "Accepted new connection\n")
 			   (set! socket-list (append socket-list (cons (cons in out) '())))
 			   (accept-handler)
 			   )))
@@ -19,21 +19,23 @@
 (define send-message (lambda ()
 		       (letrec ((send-to (lambda(slist)
 					   (begin
-					     (if (not (null? slist)) (write-line "Hola" (cdar slist) ) #t)
-					     (thread-sleep! 1)
+					     (display "Sending message to ") (display slist) (display "\n")
+					     (if (not (null? slist)) (write-line "Hola\r\n" (cdar slist) ) #t)
+					     (thread-sleep! 0.5)
 					     (if (null? slist) (send-to socket-list) (send-to (cdr slist)))))))
 			 (send-to socket-list))))
 
 (define read-messages 
   (lambda ()
     (letrec ((inner  (lambda ()
-		       (display "Entrando")
 		       (letrec ((read-from (lambda (socketlist)
+					     (display "Entrando\n")
+					     (thread-sleep! 0.5)
 					     (if (not (null? socketlist))
 					       (begin
-						 (display "before read") 
+						 (display "before read\n") 
 						 (let ((message (read-line (caar socketlist))))
-						   (display message)
+						   (display message) (display "\n")
 						   (set! message-queue (append message-queue (list message)))
 						   (read-from (cdr socketlist)))
 						 )
@@ -50,10 +52,14 @@
 						 send-message)))
 				   (thread-start! thread))))
 
+(define debug-tick (lambda() (letrec ((deb (lambda () (thread-sleep! 1) (display "tick") (deb))))
+			       (thread-start! (make-thread deb)))))
+
 (define main (lambda () 
 	       (main)))
 
 (accept)
-;(send-messages)
+(send-messages)
 (read-messages)
+(debug-tick)
 (main)
