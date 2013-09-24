@@ -11,6 +11,7 @@
 (define accept-handler (lambda()
 			 (begin
 			   (define-values (in out) (tcp-accept listener))
+			   (display "Accepted new connection")
 			   (set! socket-list (append socket-list (cons (cons in out) '())))
 			   (accept-handler)
 			   )))
@@ -23,18 +24,22 @@
 					     (if (null? slist) (send-to socket-list) (send-to (cdr slist)))))))
 			 (send-to socket-list))))
 
-#|(define read-messages 
+(define read-messages 
   (lambda ()
-  (letrec ((inner  (lambda ()
-			(letrec ((read-from (lambda (socketlist)
-					      (let ((message (read (caar socketlist))))
-						(set! message-queue (append message-queue (list message))))
-					      (if (not (null? socketlist)) 
-						(read-from (cdr socketlist)) 
-						(read-from socket-list)))))
-			  (read-from socket-list)))))
-    (thread-start! (make-thread inner)))))
-|#						
+    (letrec ((inner  (lambda ()
+		       (display "Entrando")
+		       (letrec ((read-from (lambda (socketlist)
+					     (if (not (null? socketlist))
+					       (begin
+						 (display "before read") 
+						 (let ((message (read-line (caar socketlist))))
+						   (display message)
+						   (set! message-queue (append message-queue (list message)))
+						   (read-from (cdr socketlist)))
+						 )
+					       (read-from socket-list)))))
+			 (read-from socket-list)))))
+      (thread-start! (make-thread inner)))))
 
 (define accept (lambda () (let ((thread (make-thread 
 					  accept-handler)))
@@ -49,6 +54,6 @@
 	       (main)))
 
 (accept)
-(send-messages)
-;(read-messages)
+;(send-messages)
+(read-messages)
 (main)
