@@ -8,6 +8,11 @@
 (define socket-list '())
 (define message-queue '())
 
+;TODO 
+; * Concept of groups 
+; * Core messages (like groups-count, users-count, stop, etc)
+; * Login and database access.
+
 (define accept-handler (lambda()
 			 (begin
 			   (define-values (in out) (tcp-accept listener))
@@ -31,8 +36,8 @@
 														)
 													#t)
 												))
-										; This is wrong, this need to be thought more carefully
-										; We need to change the state of the message-queue.
+										;Handle messages: Process a message at a time and updates
+										;the queue
 										(local-handle-message 
 											(lambda ()
 												(if (not (null? message-queue))
@@ -55,7 +60,7 @@
 					       (begin 
 									 (if (char? (peek-char (caar socketlist)))
 										 (let ((message (read (caar socketlist))))
-											 (display message) (display "\n")
+											; (display message) (display "\n")
 											 (set! message-queue (append message-queue (list message)))
 											 (read-from (cdr socketlist)))
 										 #f)
