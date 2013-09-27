@@ -25,25 +25,24 @@
 											(lambda (message socketlist)
 												(if (not (null? socketlist))
 													(begin
-														;(display message)
-														(write-line message (cdar socketlist))
+														(write message (cdar socketlist))
 														(thread-sleep! 1)
-														(local-send-message-to-all message (cdr socketlist)))
-													(begin (display "done")
-																 #t)
-													)))
+														(local-send-message-to-all message (cdr socketlist))
+														)
+													#t)
+												))
+										; This is wrong, this need to be thought more carefully
+										; We need to change the state of the message-queue.
 										(local-handle-message 
-											(lambda (messages)
-												(if (not (null? messages))
+											(lambda ()
+												(if (not (null? message-queue))
 													(begin 
-														(local-send-message-to-all (car messages) socket-list)
-														(set! messages (cdr messages))
-														(local-handle-message messages))
-													(begin 
-														;(display message-queue)
-														(local-handle-message message-queue))
-													))))
-									 (local-handle-message message-queue)))))
+														(local-send-message-to-all (car message-queue) socket-list)
+														(set! message-queue (cdr message-queue))
+														))
+												(local-handle-message)
+													)))
+									 (local-handle-message )))))
 			(thread-start! (make-thread inner-loop)))))
 										 
 
@@ -55,7 +54,7 @@
 					     (if (not (null? socketlist))
 					       (begin 
 									 (if (char? (peek-char (caar socketlist)))
-										 (let ((message (read-line (caar socketlist))))
+										 (let ((message (read (caar socketlist))))
 											 (display message) (display "\n")
 											 (set! message-queue (append message-queue (list message)))
 											 (read-from (cdr socketlist)))
